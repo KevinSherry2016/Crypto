@@ -1,73 +1,117 @@
-import pandas as pd
-import os
-import glob
-from datetime import datetime, timezone
-import re
+import csv
+import datetime
+import json
+import sys
+from urllib.parse import urlencode
+import urllib.request
+import urllib.error
 
-# 配置路径
-FUNDING_FILE = 'fundingRate.csv'
-SPOT_DIR = 'marketData/spot/temp_unzip'
-FUTURES_DIR = 'marketData/futures/temp_unzip'
+API_BASE = 'https://fapi.binance.com/fapi/v1/fundingRate'
+START_PARAM = '20240101000000'  # format: YYYYMMDDHHMMSS
+END_PARAM = '20251031235959'    # format: YYYYMMDDHHMMSS
+SYMBOL_PARAM = 'BTCUSDT'        # example: BTCUSDT
+MAX_DAYS = 30
 
-# 读取 fundingRate.csv
-funding_df = pd.read_csv(FUNDING_FILE)
 
-def get_date_str(ts):
-    dt = datetime.fromtimestamp(ts // 1000, timezone.utc)
-    return dt.strftime('%Y-%m-%d')
+def parse_time_arg(s):
+    if s is None:
+        return None
+    s = str(s).strip()
+    if len(s) == 14 and s.isdigit():
+        try:
+            dt = datetime.datetime.strptime(s, '%Y%m%d%H%M%S')
+            epoch_ms = int(dt.replace(tzinfo=datetime.timezone.utc).timestamp() * 1000)
+            return dt, epoch_ms
+        except Exception:
+            raise ValueError('time must be in YYYYMMDDHHMMSS format')
+    raise ValueError('time must be in YYYYMMDDHHMMSS format')
 
-def extract_date_from_filename(filename):
-    # 提取文件名中的日期部分
-    match = re.search(r'(\d{4}-\d{2}-\d{2})', filename)
-    return match.group(1) if match else None
 
-def find_price_in_files_with_ts(folder, target_ts, skip_header=False):
-    date_str = get_date_str(target_ts)
-    all_files = sorted(glob.glob(os.path.join(folder, '*.csv')))
-    # 只从对应日期的文件开始查找
-    files_to_search = [f for f in all_files if extract_date_from_filename(f) and extract_date_from_filename(f) >= date_str]
-    for csv_file in files_to_search:
-        file_date = extract_date_from_filename(csv_file)
-        if file_date and file_date >= date_str:
-            with open(csv_file, 'r') as f:
-                if skip_header:
-                    next(f)
-                for line in f:
-                    parts = line.strip().split(',')
-                    if len(parts) < 6:
-                        continue
-                    ts = int(parts[5])
-                    price = float(parts[1])
-                    # 判断是现货还是期货
-                    if folder == SPOT_DIR:
-                        cmp_ts = target_ts * 1000
-                    else:
-                        cmp_ts = target_ts
-                    if ts >= cmp_ts:
-                        return price, ts
-    # 如果当前文件没找到，则继续下一个文件
-    return None, None
+def fetch_funding_rate(symbol, start_ms, end_ms, timeout=30):
+    params = {
+        'symbol': symbol,
+        'startTime': str(start_ms),
+        'endTime': str(end_ms),
+    }
+    url = API_BASE + '?' + urlencode(params)
+    req = urllib.request.Request(url, headers={'User-Agent': 'binance-funding-csv/1.0'})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = resp.read()
+            return json.loads(data.decode('utf-8'))
+    except urllib.error.HTTPError as he:
+        body = he.read().decode('utf-8', errors='ignore')
+        raise RuntimeError(f'HTTP error {he.code}: {body}')
+    except Exception as e:
+        raise
 
-spot_price_col = []
-futures_price_col = []
-spot_ts_col = []
-futures_ts_col = []
 
-total = len(funding_df)
-for idx, row in funding_df.iterrows():
-    funding_time = int(row['fundingTime'])
-    print(f'处理第 {idx+1}/{total} 行，fundingTime={funding_time} ...')
-    spot_price, spot_ts = find_price_in_files_with_ts(SPOT_DIR, funding_time)
-    futures_price, futures_ts = find_price_in_files_with_ts(FUTURES_DIR, funding_time, skip_header=True)
-    spot_price_col.append(spot_price)
-    futures_price_col.append(futures_price)
-    spot_ts_col.append(spot_ts)
-    futures_ts_col.append(futures_ts)
+def write_csv(records, outpath, write_header=True):
+    if not records:
+        return
+    keys = set()
+    for r in records:
+        keys.update(r.keys())
+    preferred = ['symbol', 'fundingTime', 'fundingRate']
+    other = [k for k in sorted(keys) if k not in preferred]
+    fieldnames = [k for k in preferred if k in keys] + other + ['fundingTime_str']
 
-funding_df['spotPrice'] = spot_price_col
-funding_df['futuresPrice'] = futures_price_col
-funding_df['spotPrice_ts'] = spot_ts_col
-funding_df['futuresPrice_ts'] = futures_ts_col
+    with open(outpath, 'a', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        if write_header:
+            writer.writeheader()
+        for r in records:
+            row = {k: r.get(k, '') for k in fieldnames}
+            # 增加格式化时间戳
+            try:
+                ts = int(r.get('fundingTime', 0))
+                dt = datetime.datetime.fromtimestamp(ts / 1000, datetime.timezone.utc)
+                row['fundingTime_str'] = dt.strftime('%Y%m%d%H%M%S')
+            except Exception:
+                row['fundingTime_str'] = ''
+            writer.writerow(row)
 
-funding_df.to_csv('fundingRate_with_prices.csv', index=False)
-print('处理完成，结果已保存为 fundingRate_with_prices.csv')
+
+def main():
+    if not SYMBOL_PARAM:
+        print('SYMBOL_PARAM must be set at the top of the script', file=sys.stderr)
+        sys.exit(2)
+    try:
+        start_dt, start_ms = parse_time_arg(START_PARAM)
+        end_dt, end_ms = parse_time_arg(END_PARAM)
+    except ValueError as e:
+        print('Invalid time argument:', e, file=sys.stderr)
+        sys.exit(2)
+
+    if start_ms is None or end_ms is None:
+        print('START_PARAM and END_PARAM must be provided at the top of the script', file=sys.stderr)
+        sys.exit(2)
+
+    print(f'Fetching fundingRate for {SYMBOL_PARAM} from {start_dt} to {end_dt}...')
+    outpath = 'fundingRate.csv'
+    first_batch = True
+    batch_start = start_dt
+    batch_num = 1
+    while batch_start < end_dt:
+        batch_end = batch_start + datetime.timedelta(days=MAX_DAYS)
+        if batch_end > end_dt:
+            batch_end = end_dt
+        batch_start_ms = int(batch_start.replace(tzinfo=datetime.timezone.utc).timestamp() * 1000)
+        batch_end_ms = int(batch_end.replace(tzinfo=datetime.timezone.utc).timestamp() * 1000)
+        print(f'Batch {batch_num}: {batch_start} ~ {batch_end}')
+        print(f'  Request params: start_ms={batch_start_ms}, end_ms={batch_end_ms}')
+        try:
+            recs = fetch_funding_rate(SYMBOL_PARAM, batch_start_ms, batch_end_ms)
+        except Exception as e:
+            print('Failed to fetch data:', e, file=sys.stderr)
+            sys.exit(1)
+        print(f'  Got {len(recs)} records')
+        write_csv(recs, outpath, write_header=first_batch)
+        print(f'  Written to {outpath} (header={first_batch})')
+        first_batch = False
+        batch_start = batch_end
+        batch_num += 1
+    print(f'All batches done. Output: {outpath}')
+
+if __name__ == '__main__':
+    main()
