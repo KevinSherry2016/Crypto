@@ -9,15 +9,18 @@ import urllib.error
 BASE_ROOT = 'https://data.binance.vision/'
 PREFIX = 'data/{market}/{interval}/{datatype}/{symbol}/'
 FNAME_PATTERN = '{symbol}-{datatype}-{date}.zip'
+KLINES_PREFIX = 'data/{market}/{interval}/{datatype}/{symbol}/{kline_interval}/'
+KLINES_FNAME_PATTERN = '{symbol}-{kline_interval}-{date}.zip'
 HEADERS = { 'User-Agent': 'binance-downloader/1.0' }
 
-START_PARAM = '20251001'
-END_PARAM = '20251010'
+START_PARAM = '20240101'
+END_PARAM = '20251031'
 SYMBOL_PARAM = 'BTCUSDT'
 DEST_PARAM = 'marketData'
 MARKET_PARAM = 'futures/um'
 INTERVAL_PARAM = 'daily'
-DATATYPE_PARAM = 'aggTrades'
+DATATYPE_PARAM = 'klines'
+KLINE_INTERVAL = '1h'
 
 def parse_yyyymmdd(s):
     try:
@@ -38,8 +41,16 @@ def build_url(symbol, date_obj):
     market = MARKET_PARAM
     interval = INTERVAL_PARAM
     datatype = DATATYPE_PARAM
-    prefix = PREFIX.format(market=market, interval=interval, datatype=datatype, symbol=symbol)
-    fname = FNAME_PATTERN.format(symbol=symbol, datatype=datatype, date=date_str)
+    
+    if datatype == 'klines':
+        # K线数据使用特殊的URL格式
+        prefix = KLINES_PREFIX.format(market=market, interval=interval, datatype=datatype, symbol=symbol, kline_interval=KLINE_INTERVAL)
+        fname = KLINES_FNAME_PATTERN.format(symbol=symbol, kline_interval=KLINE_INTERVAL, date=date_str)
+    else:
+        # 其他数据类型使用原有格式
+        prefix = PREFIX.format(market=market, interval=interval, datatype=datatype, symbol=symbol)
+        fname = FNAME_PATTERN.format(symbol=symbol, datatype=datatype, date=date_str)
+    
     path = prefix + fname
     return urljoin(BASE_ROOT, path), fname
 
