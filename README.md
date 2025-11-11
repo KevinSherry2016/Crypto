@@ -15,3 +15,8 @@ https://developers.binance.com/docs/zh-CN/binance-spot-api-docs/rest-api/general
 注意：
 1. 计算资费时，使用funding_rate * market_price
 2. 计算资费时，以时刻为准。如果那一时刻有仓位，就收资费
+
+moving_average_strategy
+V1：
+使用Z_Score方法
+观察期M，预测期N，，开仓阈值z_open
