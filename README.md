@@ -18,5 +18,8 @@ https://developers.binance.com/docs/zh-CN/binance-spot-api-docs/rest-api/general
 
 moving_average_strategy
 V1：
-使用Z_Score方法
+使用Z_Score标准化数据
 观察期M，预测期N，，开仓阈值z_open
+
+V2：
+观察期M，开仓阈值z_open，平仓阈值z_close
