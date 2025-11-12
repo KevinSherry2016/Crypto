@@ -16,26 +16,40 @@ def moving_average_strategy(csv_file, M, z_open, z_close):
     
     # 生成开仓信号：z_score > z_open 做多，z_score < -z_open 做空
     df['open_signal'] = np.where(df['close_zscore'] > z_open, 1, 
-                                  np.where(df['close_zscore'] < -z_open, -1, 0))
+                                  np.where(df['close_zscore'] < (-z_open), -1, 0))
     # 前 M 个信号设为 0（因为没有足够数据计算z_score）
     df.loc[:M-1, 'open_signal'] = 0
-    
-    # 生成平仓信号：z_score 回到 [-z_close, z_close] 区间内
-    df['close_signal'] = np.where((df['close_zscore'] >= -z_close) & (df['close_zscore'] <= z_close), 1, 0)
     
     # 计算 position（持仓状态）
     df['position'] = 0
     current_position = 0
     
     for i in range(len(df)):
-        if df.loc[i, 'close_signal'] == 1:
-            # 平仓信号，清零持仓
-            current_position = 0
-        elif df.loc[i, 'open_signal'] != 0:
-            # 开仓信号，更新持仓
+        z_score = df.loc[i, 'close_zscore']
+        
+        # 平仓逻辑
+        if current_position == 1:  # 持有多头
+            # 当 z_score < z_close 并且 z_score >= 0 时，平掉多头
+            if z_score < z_close and z_score > 0:
+                current_position = 0
+        elif current_position == -1:  # 持有空头
+            # 当 z_score > -z_close 并且 z_score <= 0 时，平掉空头
+            if z_score > (-z_close) and z_score < 0:
+                current_position = 0
+        
+        # 开仓逻辑（在没有持仓的情况下）
+        if current_position == 0 and df.loc[i, 'open_signal'] != 0:
             current_position = df.loc[i, 'open_signal']
-        # 否则保持当前持仓
+        
         df.loc[i, 'position'] = current_position
+    
+    # 计算 GMV 和 turnover
+    # GMV = position * closePrice
+    df['gmv'] = df['position'] * df['close']
+    
+    # turnover = abs(position - lastPosition) * closePrice
+    df['turnover'] = abs(df['position'] - df['position'].shift(1)) * df['close']
+    df['turnover'] = df['turnover'].fillna(0)  # 第一行填充为0
     
     # 计算 return 和 pnl
     # return = close / last_close - 1
@@ -64,6 +78,11 @@ def moving_average_strategy(csv_file, M, z_open, z_close):
     pnl_std = df['pnl'].std()
     sharpe_ratio = (pnl_mean / pnl_std * 94) if pnl_std != 0 else 0
     
+    # 计算 hp (holding period) 指标
+    sum_gmv = df['gmv'].abs().sum()
+    sum_turnover = df['turnover'].sum()
+    hp = (sum_gmv / sum_turnover * 2) if sum_turnover != 0 else 0
+    
     # 绘制累计PNL曲线，横轴为时间（open_time），纵轴为累计PNL
     plt.figure(figsize=(12, 6))
     if 'open_time' in df.columns:
@@ -73,7 +92,7 @@ def moving_average_strategy(csv_file, M, z_open, z_close):
     else:
         plt.plot(df.index, df['cpnl'], linewidth=1.5, color='blue')
         plt.xlabel('Index', fontsize=12)
-    plt.title(f'Cumulative PNL - M={M}, z_open={z_open}, z_close={z_close}, Sharpe Ratio={sharpe_ratio:.2f}', fontsize=14, fontweight='bold')
+    plt.title(f'Cumulative PNL - M={M}, z_open={z_open}, z_close={z_close}, Sharpe={sharpe_ratio:.2f}, HP={hp:.0f}', fontsize=14, fontweight='bold')
     plt.ylabel('Cumulative PNL', fontsize=12)
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
@@ -84,57 +103,59 @@ def moving_average_strategy(csv_file, M, z_open, z_close):
     print(f"Plot saved to: {plot_file}")
     plt.close()
     
-    return df, sharpe_ratio
+    return df, sharpe_ratio, hp
 
 
 if __name__ == "__main__":
-    # 参数网格
-    M_values = [4,8,12,16,20,24,28,32,36,40,44,48,52,56,60, 64,68,72,76,80,84,88,92,96,100,104,108,112,116,120]
-    z_open_values = [0.2, 0.4, 0.6, 0.8, 1.0]
-    z_close_values = [0.1, 0.2, 0.3, 0.4, 0.5]
+    # # 参数网格
+    # M_values = [4,8,12,16,20,24,28,32,36,40,44,48,52,56,60, 64,68,72,76,80,84,88,92,96,100,104,108,112,116,120]
+    # z_open_values = [0.6, 0.8, 1.0,1.2, 1.4,1.6,1.8,2.0]
+    # z_close_values = [0.1, 0.2, 0.3, 0.4, 0.5]
     
-    # 存储结果
-    results_summary = []
+    # # 存储结果
+    # results_summary = []
     
-    print("="*60)
-    print(f"开始参数遍历: {len(M_values)} x {len(z_open_values)} x {len(z_close_values)} = {len(M_values) * len(z_open_values) * len(z_close_values)} 组参数")
-    print("="*60)
+    # print("="*60)
+    # print(f"开始参数遍历: {len(M_values)} x {len(z_open_values)} x {len(z_close_values)} = {len(M_values) * len(z_open_values) * len(z_close_values)} 组参数")
+    # print("="*60)
     
-    # 遍历所有参数组合
-    for M in M_values:
-        for z_open in z_open_values:
-            for z_close in z_close_values:
-                print(f"\n运行策略: M={M}, z_open={z_open}, z_close={z_close}")
-                try:
-                    result_df, sharpe_ratio = moving_average_strategy('klineData.csv', M=M, z_open=z_open, z_close=z_close)
-                    # 记录关键指标
-                    final_cpnl = result_df['cpnl'].iloc[-1]
-                    total_signals = (result_df['open_signal'] != 0).sum()
-                    max_position = result_df['position'].abs().max()
-                    results_summary.append({
-                        'M': M,
-                        'z_open': z_open,
-                        'z_close': z_close,
-                        'final_cpnl': final_cpnl,
-                        'sharpe_ratio': sharpe_ratio,
-                        'total_signals': total_signals,
-                        'max_position': max_position
-                    })
-                    print(f"  最终累计PNL: {final_cpnl:.6f}, Sharpe Ratio: {sharpe_ratio:.2f}")
-                except Exception as e:
-                    print(f"  错误: {e}")
+    # # 遍历所有参数组合
+    # for M in M_values:
+    #     for z_open in z_open_values:
+    #         for z_close in z_close_values:
+    #             print(f"\n运行策略: M={M}, z_open={z_open}, z_close={z_close}")
+    #             try:
+    #                 result_df, sharpe_ratio, hp = moving_average_strategy('klineData.csv', M=M, z_open=z_open, z_close=z_close)
+    #                 # 记录关键指标
+    #                 final_cpnl = result_df['cpnl'].iloc[-1]
+    #                 total_signals = (result_df['open_signal'] != 0).sum()
+    #                 max_position = result_df['position'].abs().max()
+    #                 results_summary.append({
+    #                     'M': M,
+    #                     'z_open': z_open,
+    #                     'z_close': z_close,
+    #                     'final_cpnl': final_cpnl,
+    #                     'sharpe_ratio': sharpe_ratio,
+    #                     'hp': hp,
+    #                     'total_signals': total_signals,
+    #                     'max_position': max_position
+    #                 })
+    #                 print(f"  最终累计PNL: {final_cpnl:.6f}, Sharpe Ratio: {sharpe_ratio:.2f}, HP: {hp:.0f}")
+    #             except Exception as e:
+    #                 print(f"  错误: {e}")
     
-    # 保存汇总结果
-    summary_df = pd.DataFrame(results_summary)
-    import os
-    os.makedirs('kline', exist_ok=True)
-    summary_file = 'kline/strategy_summary.csv'
-    summary_df.to_csv(summary_file, index=False)
-    print("\n" + "="*60)
-    print("参数遍历完成！")
-    print(f"汇总结果已保存到: {summary_file}")
-    print("="*60)
+    # # 保存汇总结果
+    # summary_df = pd.DataFrame(results_summary)
+    # import os
+    # os.makedirs('kline', exist_ok=True)
+    # summary_file = 'kline/strategy_summary.csv'
+    # summary_df.to_csv(summary_file, index=False)
+    # print("\n" + "="*60)
+    # print("参数遍历完成！")
+    # print(f"汇总结果已保存到: {summary_file}")
+    # print("="*60)
     
+    summary_df = pd.read_csv('kline/strategy_summary.csv')
     # 找出最佳参数
     if len(summary_df) > 0:
         best_result = summary_df.loc[summary_df['final_cpnl'].idxmax()]
@@ -145,20 +166,38 @@ if __name__ == "__main__":
         print(f"  最终累计PNL = {best_result['final_cpnl']:.6f}")
         print(f"  Sharpe Ratio = {best_result['sharpe_ratio']:.2f}")
         
-        # 生成每个z_open的Sharpe Ratio热力图
+        # 生成Sharpe Ratio热力图 - 所有M在同一张图
         print("\n生成 Sharpe Ratio 热力图...")
-        for z_open in sorted(summary_df['z_open'].unique()):
-            sub_df = summary_df[summary_df['z_open'] == z_open]
-            heatmap_data = sub_df.pivot(index='z_close', columns='M', values='sharpe_ratio')
-            plt.figure(figsize=(14, 10))
+        M_values = sorted(summary_df['M'].unique())
+        
+        # 计算子图布局（尽量接近正方形）
+        n_plots = len(M_values)
+        n_cols = int(np.ceil(np.sqrt(n_plots)))
+        n_rows = int(np.ceil(n_plots / n_cols))
+        
+        # 创建大图
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(6*n_cols, 5*n_rows))
+        axes = axes.flatten() if n_plots > 1 else [axes]
+        
+        for idx, M in enumerate(M_values):
+            sub_df = summary_df[summary_df['M'] == M]
+            heatmap_data = sub_df.pivot(index='z_close', columns='z_open', values='sharpe_ratio')
+            
             sns.heatmap(heatmap_data, annot=True, fmt='.2f', cmap='RdYlGn', 
-                        center=0, cbar_kws={'label': 'Sharpe Ratio'})
-            plt.title(f'Sharpe Ratio Heatmap (z_open={z_open})', fontsize=16, fontweight='bold')
-            plt.xlabel('M (均线周期)', fontsize=12)
-            plt.ylabel('z_close (平仓阈值)', fontsize=12)
-            plt.tight_layout()
-            heatmap_file = f'kline/sharpe_ratio_heatmap_z_open{z_open}.png'
-            plt.savefig(heatmap_file, dpi=150)
-            print(f"热力图已保存到: {heatmap_file}")
-            plt.close()
-        print("\n所有任务完成！")
+                        center=0, cbar_kws={'label': 'Sharpe Ratio'}, ax=axes[idx])
+            axes[idx].set_title(f'M={M}', fontsize=12, fontweight='bold')
+            axes[idx].set_xlabel('z_open (开仓阈值)', fontsize=10)
+            axes[idx].set_ylabel('z_close (平仓阈值)', fontsize=10)
+        
+        # 隐藏多余的子图
+        for idx in range(n_plots, len(axes)):
+            axes[idx].set_visible(False)
+        
+        plt.suptitle('Sharpe Ratio Heatmaps for Different M Values', fontsize=16, fontweight='bold', y=0.995)
+        plt.tight_layout()
+        
+        heatmap_file = 'kline/sharpe_ratio_heatmap_all_M.png'
+        plt.savefig(heatmap_file, dpi=150, bbox_inches='tight')
+        print(f"热力图已保存到: {heatmap_file}")
+        plt.close()
+        print("\n所有任务完成!")
