@@ -107,55 +107,54 @@ def moving_average_strategy(csv_file, M, z_open, z_close):
 
 
 if __name__ == "__main__":
-    # # 参数网格
-    # M_values = [4,8,12,16,20,24,28,32,36,40,44,48,52,56,60, 64,68,72,76,80,84,88,92,96,100,104,108,112,116,120]
-    # z_open_values = [0.6, 0.8, 1.0,1.2, 1.4,1.6,1.8,2.0]
-    # z_close_values = [0.1, 0.2, 0.3, 0.4, 0.5]
+    # 参数网格
+    M_values = [4,8,12,16,20,24,28,32,36,40,44,48,52,56,60, 64,68,72,76,80,84,88,92,96,100,104,108,112,116,120]
+    z_open_values = [0.6, 0.7, 0.8,0.9, 1.0, 1.1, 1.2,1.3,1.4,1.5]
+    z_close_values = [0.1, 0.2, 0.3, 0.4, 0.5]
     
-    # # 存储结果
-    # results_summary = []
+    # 存储结果
+    results_summary = []
     
-    # print("="*60)
-    # print(f"开始参数遍历: {len(M_values)} x {len(z_open_values)} x {len(z_close_values)} = {len(M_values) * len(z_open_values) * len(z_close_values)} 组参数")
-    # print("="*60)
+    print("="*60)
+    print(f"开始参数遍历: {len(M_values)} x {len(z_open_values)} x {len(z_close_values)} = {len(M_values) * len(z_open_values) * len(z_close_values)} 组参数")
+    print("="*60)
     
-    # # 遍历所有参数组合
-    # for M in M_values:
-    #     for z_open in z_open_values:
-    #         for z_close in z_close_values:
-    #             print(f"\n运行策略: M={M}, z_open={z_open}, z_close={z_close}")
-    #             try:
-    #                 result_df, sharpe_ratio, hp = moving_average_strategy('klineData.csv', M=M, z_open=z_open, z_close=z_close)
-    #                 # 记录关键指标
-    #                 final_cpnl = result_df['cpnl'].iloc[-1]
-    #                 total_signals = (result_df['open_signal'] != 0).sum()
-    #                 max_position = result_df['position'].abs().max()
-    #                 results_summary.append({
-    #                     'M': M,
-    #                     'z_open': z_open,
-    #                     'z_close': z_close,
-    #                     'final_cpnl': final_cpnl,
-    #                     'sharpe_ratio': sharpe_ratio,
-    #                     'hp': hp,
-    #                     'total_signals': total_signals,
-    #                     'max_position': max_position
-    #                 })
-    #                 print(f"  最终累计PNL: {final_cpnl:.6f}, Sharpe Ratio: {sharpe_ratio:.2f}, HP: {hp:.0f}")
-    #             except Exception as e:
-    #                 print(f"  错误: {e}")
+    # 遍历所有参数组合
+    for M in M_values:
+        for z_open in z_open_values:
+            for z_close in z_close_values:
+                print(f"\n运行策略: M={M}, z_open={z_open}, z_close={z_close}")
+                try:
+                    result_df, sharpe_ratio, hp = moving_average_strategy('klineData.csv', M=M, z_open=z_open, z_close=z_close)
+                    # 记录关键指标
+                    final_cpnl = result_df['cpnl'].iloc[-1]
+                    total_signals = (result_df['open_signal'] != 0).sum()
+                    max_position = result_df['position'].abs().max()
+                    results_summary.append({
+                        'M': M,
+                        'z_open': z_open,
+                        'z_close': z_close,
+                        'final_cpnl': final_cpnl,
+                        'sharpe_ratio': sharpe_ratio,
+                        'hp': hp,
+                        'total_signals': total_signals,
+                        'max_position': max_position
+                    })
+                    print(f"  最终累计PNL: {final_cpnl:.6f}, Sharpe Ratio: {sharpe_ratio:.2f}, HP: {hp:.0f}")
+                except Exception as e:
+                    print(f"  错误: {e}")
     
-    # # 保存汇总结果
-    # summary_df = pd.DataFrame(results_summary)
-    # import os
-    # os.makedirs('kline', exist_ok=True)
-    # summary_file = 'kline/strategy_summary.csv'
-    # summary_df.to_csv(summary_file, index=False)
-    # print("\n" + "="*60)
-    # print("参数遍历完成！")
-    # print(f"汇总结果已保存到: {summary_file}")
-    # print("="*60)
+    # 保存汇总结果
+    summary_df = pd.DataFrame(results_summary)
+    import os
+    os.makedirs('kline', exist_ok=True)
+    summary_file = 'kline/strategy_summary.csv'
+    summary_df.to_csv(summary_file, index=False)
+    print("\n" + "="*60)
+    print("参数遍历完成！")
+    print(f"汇总结果已保存到: {summary_file}")
+    print("="*60)
     
-    summary_df = pd.read_csv('kline/strategy_summary.csv')
     # 找出最佳参数
     if len(summary_df) > 0:
         best_result = summary_df.loc[summary_df['final_cpnl'].idxmax()]
