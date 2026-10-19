@@ -31,7 +31,7 @@ aum 百万美金，算比较大
 10名 —— 100名小币种
 
 API密钥
-nyWbd4JWnPqVG1AYbbcWddyOl5dpK7lETsmfZliZ7ztXGT1VdOS84eXV0tMLoZfZ
+5TuntjtR4eKGj4BpWR4dmnFp2KCtnJVg3nrDDtLw57Aex9san6exRzu9fSqH3n7G
 
 加密密钥
-3hiJeOmsGYEUxsV7GFzblxzjTpWcbHMa21vyeKWl58vsVn0v8yEtDhtDym1Wu9ID
+CYMMn5JUfWeRgdxJzaXX6Fe4jQh4g1G51HvqYLfNnB2gbiwXxvbyWhnBBs1d9Fg9
