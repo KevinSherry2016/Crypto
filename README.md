@@ -16,17 +16,6 @@ https://developers.binance.com/docs/zh-CN/binance-spot-api-docs/rest-api/general
 1. 计算资费时，使用funding_rate * market_price
 2. 计算资费时，以时刻为准。如果那一时刻有仓位，就收资费
 
-moving_average_strategy
-V1：
-使用Z_Score标准化数据
-观察期M，预测期N，，开仓阈值z_open
-
-V2：
-观察期M，开仓阈值z_open，平仓阈值z_close
-
-
-Others
-
 策略容量 交易费率 - > 万5 万2 BTC POT = 20
 
 binance - > btc/usdt
