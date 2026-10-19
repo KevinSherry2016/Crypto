@@ -1,0 +1,12 @@
+{
+  "symbol": "BTCUSDT",
+  "portfolio": "BTCUSDT_RecommendedPortfolio",
+  "factor_weights": {
+    "Volume_CMF_BTCUSDT_N180_STATE_MACHINE_position_normalized.csv": 0.5,
+    "Microstructure_BuyingSellingPressure_BTCUSDT_N120_STATE_MACHINE_position_normalized.csv": 0.5
+  },
+  "normalization_scale": 0.8544416736221858,
+  "annualized_volatility": 93.59487165438073,
+  "sharpeRatio": 1.9637847243001154,
+  "maxDrawdown": -81.87786604395174
+}

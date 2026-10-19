@@ -1,0 +1,11 @@
+{
+  "sharpeRatio": 1.851575405139369,
+  "pot": 25.26968169294231,
+  "holdingPeriod": 38.75424630768747,
+  "maxDrawdown": -53.513507695616546,
+  "symbol": "ETHUSDT",
+  "factor": "Volume_OIPriceFlow",
+  "parameter": "N100",
+  "signal_method": "state_machine",
+  "normalization_scale": 1.1754397314346354
+}

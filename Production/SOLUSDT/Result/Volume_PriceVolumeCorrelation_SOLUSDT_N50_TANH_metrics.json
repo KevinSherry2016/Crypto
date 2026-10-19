@@ -1,0 +1,11 @@
+{
+  "sharpeRatio": 1.6113508207347496,
+  "pot": 28.683462472406106,
+  "holdingPeriod": 35.0057595478358,
+  "maxDrawdown": -73.45359726907546,
+  "symbol": "SOLUSDT",
+  "factor": "Volume_PriceVolumeCorrelation",
+  "parameter": "N50",
+  "signal_method": "tanh",
+  "normalization_scale": 0.32544443268053774
+}

@@ -1,0 +1,11 @@
+{
+  "sharpeRatio": 1.8799249223574162,
+  "pot": 33.99853364293714,
+  "holdingPeriod": 42.15521989716095,
+  "maxDrawdown": -61.89734947476535,
+  "symbol": "ETHUSDT",
+  "factor": "Microstructure_BuyingSellingPressure",
+  "parameter": "N110",
+  "signal_method": "raw",
+  "normalization_scale": 0.06319972214169967
+}

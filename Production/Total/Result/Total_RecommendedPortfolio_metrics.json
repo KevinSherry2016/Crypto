@@ -1,0 +1,24 @@
+{
+  "portfolio": "Total_RecommendedPortfolio",
+  "weighting_method": "manual_ratio",
+  "asset_weight_ratios": {
+    "BTCUSDT": 1.0,
+    "ETHUSDT": 1.0,
+    "SOLUSDT": 1.0
+  },
+  "normalization_window": [
+    "20240101000000",
+    "20260630230000"
+  ],
+  "asset_weights": {
+    "BTCUSDT": 0.3333333333333333,
+    "ETHUSDT": 0.3333333333333333,
+    "SOLUSDT": 0.3333333333333333
+  },
+  "final_normalization_scale": 0.7151990854640607,
+  "sharpeRatio": 2.970528805074326,
+  "pot": 28.253788693531632,
+  "holdingPeriod": 1.4572561843472709,
+  "holdingPeriodHours": 34.9741484243345,
+  "maxDrawdown": -47.51139426893525
+}

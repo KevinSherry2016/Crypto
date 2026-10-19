@@ -1,0 +1,11 @@
+{
+  "sharpeRatio": 1.5465889801258315,
+  "pot": 12.766878137739049,
+  "holdingPeriod": 33.91585404389388,
+  "maxDrawdown": -114.93434518654227,
+  "symbol": "BTCUSDT",
+  "factor": "Microstructure_BuyingSellingPressure",
+  "parameter": "N120",
+  "signal_method": "state_machine",
+  "normalization_scale": 1.1497938041134699
+}

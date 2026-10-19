@@ -1,0 +1,11 @@
+{
+  "sharpeRatio": 1.809290470132079,
+  "pot": 17.85405609545822,
+  "holdingPeriod": 40.9176807347345,
+  "maxDrawdown": -56.264724687280875,
+  "symbol": "BTCUSDT",
+  "factor": "Volume_CMF",
+  "parameter": "N180",
+  "signal_method": "state_machine",
+  "normalization_scale": 1.1842637939120824
+}

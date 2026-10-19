@@ -1,0 +1,13 @@
+{
+  "symbol": "SOLUSDT",
+  "portfolio": "SOLUSDT_RecommendedPortfolio",
+  "factor_weights": {
+    "Volume_OIPriceFlow_SOLUSDT_N50_RAW_position_normalized.csv": 0.45,
+    "Volume_OIPriceFlow_SOLUSDT_N90_RAW_position_normalized.csv": 0.25,
+    "Volume_PriceVolumeCorrelation_SOLUSDT_N50_TANH_position_normalized.csv": 0.3
+  },
+  "normalization_scale": 0.9319738935533343,
+  "annualized_volatility": 93.59487165438073,
+  "sharpeRatio": 1.7255804073210452,
+  "maxDrawdown": -84.66085191752387
+}

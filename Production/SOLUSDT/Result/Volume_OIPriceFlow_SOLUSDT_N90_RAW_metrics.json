@@ -1,0 +1,11 @@
+{
+  "sharpeRatio": 1.745667768633748,
+  "pot": 39.816555824422906,
+  "holdingPeriod": 41.01654443367726,
+  "maxDrawdown": -99.68609471794372,
+  "symbol": "SOLUSDT",
+  "factor": "Volume_OIPriceFlow",
+  "parameter": "N90",
+  "signal_method": "raw",
+  "normalization_scale": 0.12194257953155611
+}

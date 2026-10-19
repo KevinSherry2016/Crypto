@@ -1,0 +1,12 @@
+{
+  "symbol": "ETHUSDT",
+  "portfolio": "ETHUSDT_RecommendedPortfolio",
+  "factor_weights": {
+    "Microstructure_BuyingSellingPressure_ETHUSDT_N110_RAW_position_normalized.csv": 0.5,
+    "Volume_OIPriceFlow_ETHUSDT_N100_STATE_MACHINE_position_normalized.csv": 0.5
+  },
+  "normalization_scale": 0.725190245019327,
+  "annualized_volatility": 93.59487165438073,
+  "sharpeRatio": 2.572780449263848,
+  "maxDrawdown": -61.4810909085916
+}
