@@ -1,0 +1,70 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run convert script",
+			"type": "shell",
+			"command": "d:/Crypto/.venv/Scripts/python.exe Utility/convert_cleandata_time_columns.py"
+		},
+		{
+			"label": "Run convert script after fix",
+			"type": "shell",
+			"command": "d:/Crypto/.venv/Scripts/python.exe Utility/convert_cleandata_time_columns.py"
+		},
+		{
+			"label": "Test timestamp invert",
+			"type": "shell",
+			"command": "d:/Crypto/.venv/Scripts/python.exe -c \"import pandas as pd; x='26110521101640'; dt=pd.to_datetime(x, format='%Y%m%d%H%M%S', utc=True); n=int(dt.timestamp()*1000); print(n); print(pd.to_datetime(n, unit='ms', utc=True).strftime('%Y%m%d%H%M%S'))\""
+		},
+		{
+			"label": "Repair CleanData timestamps",
+			"type": "shell",
+			"command": "d:/Crypto/.venv/Scripts/python.exe Utility/convert_cleandata_time_columns.py"
+		},
+		{
+			"label": "Repair timestamps again",
+			"type": "shell",
+			"command": "d:/Crypto/.venv/Scripts/python.exe Utility/convert_cleandata_time_columns.py"
+		},
+		{
+			"label": "Fix close_time from open_time",
+			"type": "shell",
+			"command": "d:/Crypto/.venv/Scripts/python.exe Utility/convert_cleandata_time_columns.py"
+		},
+		{
+			"label": "Batch switch factor trade_date to close_time",
+			"type": "shell",
+			"command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$ErrorActionPreference='Stop'; $files = Get-ChildItem -Path 'd:/Crypto/Factor' -Filter '*.py' -File; $changed=0; foreach($f in $files){ $text = Get-Content -Path $f.FullName -Raw -Encoding UTF8; $orig = $text; $text = $text.Replace('[\\\"open_time\\\", \\\"open\\\", \\\"high\\\", \\\"low\\\", \\\"close\\\", \\\"volume\\\"]','[\\\"close_time\\\", \\\"open\\\", \\\"high\\\", \\\"low\\\", \\\"close\\\", \\\"volume\\\"]'); $text = $text.Replace('[\\\"open_time\\\", \\\"open\\\", \\\"high\\\", \\\"low\\\", \\\"close\\\", \\\"volume\\\", \\\"quote_volume\\\", \\\"count\\\", \\\"oi\\\", \\\"OpenInterest\\\"]','[\\\"close_time\\\", \\\"open\\\", \\\"high\\\", \\\"low\\\", \\\"close\\\", \\\"volume\\\", \\\"quote_volume\\\", \\\"count\\\", \\\"oi\\\", \\\"OpenInterest\\\"]'); $text = $text.Replace('df = df.dropna(subset=[\\\"open_time\\\", \\\"close\\\"]).copy()','df = df.dropna(subset=[\\\"close_time\\\", \\\"close\\\"]).copy()'); $text = $text.Replace('df = df.sort_values(\\\"open_time\\\")','df = df.sort_values(\\\"close_time\\\")'); $text = $text.Replace('df[\\\"trade_date\\\"] = pd.to_datetime(df[\\\"open_time\\\"], unit=\\\"ms\\\", utc=True).dt.strftime(\\\"%Y%m%d%H%M%S\\\")','df[\\\"trade_date\\\"] = pd.to_datetime(df[\\\"close_time\\\"], unit=\\\"ms\\\", utc=True).dt.strftime(\\\"%Y%m%d%H%M%S\\\")'); $text = $text.Replace('if \\\"open_time\\\" not in df.columns or \\\"close\\\" not in df.columns:','if \\\"close_time\\\" not in df.columns or \\\"close\\\" not in df.columns:'); $text = $text.Replace('kline file must include columns: open_time, close','kline file must include columns: close_time, close'); if($text -ne $orig){ Set-Content -Path $f.FullName -Value $text -Encoding UTF8; $changed++ } }; Write-Output \\\"CHANGED_FILES=$changed\\\"\""
+		},
+		{
+			"label": "Use close_time string as trade_date",
+			"type": "shell",
+			"command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$files = Get-ChildItem -Path 'd:/Crypto/Factor' -Filter '*.py' -File; $changed=0; foreach($f in $files){ $text = Get-Content -Path $f.FullName -Raw -Encoding UTF8; $orig = $text; $text = $text.Replace('df[\\\"trade_date\\\"] = pd.to_datetime(df[\\\"close_time\\\"], unit=\\\"ms\\\", utc=True).dt.strftime(\\\"%Y%m%d%H%M%S\\\")','df[\\\"trade_date\\\"] = df[\\\"close_time\\\"].astype(str)'); if($f.Name -eq 'CrossSectional_Skewness.py'){ $text = $text.Replace('df[\\\"open_time\\\"] = pd.to_numeric(df[\\\"open_time\\\"], errors=\\\"coerce\\\")','df[\\\"close_time\\\"] = pd.to_numeric(df[\\\"close_time\\\"], errors=\\\"coerce\\\")'); $text = $text.Replace('# Binance open_time is millisecond timestamp; keep full bar timestamp granularity.','# Use close_time as trade_date for crypto bars.'); }; if($text -ne $orig){ Set-Content -Path $f.FullName -Value $text -Encoding UTF8; $changed++ } }; Write-Output \\\"CHANGED_FILES=$changed\\\"\""
+		},
+		{
+			"label": "Fix factor trade_date close_time",
+			"type": "shell",
+			"command": "powershell -NoProfile -ExecutionPolicy Bypass -File ./Utility/fix_trade_date_to_close_time.ps1"
+		},
+		{
+			"label": "Run factorEvaluation to reproduce bug",
+			"type": "shell",
+			"command": "d:/Crypto/.venv/Scripts/python.exe Utility/factorEvaluation.py"
+		},
+		{
+			"label": "Re-run factorEvaluation after bugfix",
+			"type": "shell",
+			"command": "d:/Crypto/.venv/Scripts/python.exe Utility/factorEvaluation.py"
+		},
+		{
+			"label": "Verify warning removed",
+			"type": "shell",
+			"command": "d:/Crypto/.venv/Scripts/python.exe Utility/factorEvaluation.py"
+		},
+		{
+			"label": "Check warning removed again",
+			"type": "shell",
+			"command": "d:/Crypto/.venv/Scripts/python.exe Utility/factorEvaluation.py"
+		}
+	]
+}

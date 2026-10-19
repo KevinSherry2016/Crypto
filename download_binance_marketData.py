@@ -14,14 +14,14 @@ KLINES_FNAME_PATTERN = '{symbol}-{kline_interval}-{date}.zip'
 HEADERS = { 'User-Agent': 'binance-downloader/1.0' }
 
 START_PARAM = '20240101'
-END_PARAM = '20251031'
-SYMBOL_PARAM = 'BTCUSDT'
+END_PARAM = '20260630'
+SYMBOL_PARAM = 'SOLUSDT'
 DEST_PARAM = 'marketData'
 MARKET_PARAM = 'futures/um'
 INTERVAL_PARAM = 'daily'
 DATATYPE_PARAM = 'klines'
 KLINE_INTERVAL = '1h'
-
+    
 def parse_yyyymmdd(s):
     try:
         return datetime.datetime.strptime(s, '%Y%m%d').date()

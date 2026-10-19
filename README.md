@@ -23,3 +23,28 @@ V1：
 
 V2：
 观察期M，开仓阈值z_open，平仓阈值z_close
+
+
+Others
+
+策略容量 交易费率 - > 万5 万2 BTC POT = 20
+
+binance - > btc/usdt
+
+每小时成交量 * 1% =
+
+20万GMV，总共100万AUM
+
+0.2倍杠杆（回撤不超过百分之20） 几百万美金 return 30+ 2 —— 3 天（48h——72h） POT > 60/70
+
+aum 百万美金，算比较大
+
+10名 —— 100名小币种
+
+## 版本管理范围
+
+仓库提交代码、文档和必要配置。行情数据与回测产物保留在本地，
+由 `.gitignore` 排除：`CleanData/`、`marketData/`、`Evaluate_*/`、
+`Result_*/`、`Production/*/Result/`、`moving_average_strategy_result/`
+以及根目录的 `klineData.csv`。本地虚拟环境、Python 缓存和 `.env`
+文件也不提交。忽略规则不会自动移除历史上已经跟踪的文件。
