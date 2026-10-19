@@ -40,11 +40,3 @@ binance - > btc/usdt
 aum 百万美金，算比较大
 
 10名 —— 100名小币种
-
-## 版本管理范围
-
-仓库提交代码、文档和必要配置。行情数据与回测产物保留在本地，
-由 `.gitignore` 排除：`CleanData/`、`marketData/`、`Evaluate_*/`、
-`Result_*/`、`Production/*/Result/`、`moving_average_strategy_result/`
-以及根目录的 `klineData.csv`。本地虚拟环境、Python 缓存和 `.env`
-文件也不提交。忽略规则不会自动移除历史上已经跟踪的文件。
