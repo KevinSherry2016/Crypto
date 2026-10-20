@@ -15,7 +15,7 @@ HEADERS = { 'User-Agent': 'binance-downloader/1.0' }
 
 START_PARAM = '20240101'
 END_PARAM = '20260930'
-SYMBOL_PARAM = 'SOLUSDT'
+SYMBOLS_PARAM = ['SOLUSDT']
 DEST_PARAM = 'marketData'
 MARKET_PARAM = 'futures/um'
 INTERVAL_PARAM = 'daily'
@@ -114,8 +114,10 @@ def main():
     else:
         end_date = datetime.date.today()
 
-    if not SYMBOL_PARAM:
-        print('SYMBOL_PARAM must be set at the top of the script', file=sys.stderr)
+    if not isinstance(SYMBOLS_PARAM, list) or not SYMBOLS_PARAM or any(
+        not isinstance(symbol, str) or not symbol.strip() for symbol in SYMBOLS_PARAM
+    ):
+        print('SYMBOLS_PARAM must be a non-empty list of symbols (e.g. ["BTCUSDT", "ETHUSDT"])', file=sys.stderr)
         sys.exit(2)
 
     if not MARKET_PARAM:
@@ -130,19 +132,17 @@ def main():
         print('DATA_PARAM must be set at the top of the script (e.g. "aggTrades")', file=sys.stderr)
         sys.exit(2)
 
-    symbol = SYMBOL_PARAM
     dest = DEST_PARAM
 
     os.makedirs(dest, exist_ok=True)
 
     planned = []
-    for d in daterange(start_date, end_date):
-        url, fname = build_url(symbol, d)
-        planned.append((d, url, fname))
-
-    print(f'Planned files for {symbol} from {start_date} to {end_date}:')
-    for d, url, fname in planned:
-        print('  ', fname, '-', url)
+    for symbol in dict.fromkeys(SYMBOLS_PARAM):
+        print(f'Planned files for {symbol} from {start_date} to {end_date}:')
+        for d in daterange(start_date, end_date):
+            url, fname = build_url(symbol, d)
+            planned.append((d, url, fname))
+            print('  ', fname, '-', url)
 
     print('\nStarting downloads into', dest)
     for d, url, fname in planned:

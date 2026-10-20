@@ -4,7 +4,7 @@ from pathlib import Path
 from zipfile import ZipFile
 
 # 在这里直接修改要处理的交易币对，无需命令行参数。
-SYMBOL = "SOLUSDT"
+SYMBOLS = ["SOLUSDT"]
 
 # Binance Kline CSV 默认 12 列。
 DEFAULT_COLUMNS = [
@@ -97,25 +97,34 @@ def merge_csv_files(csv_files: list[Path], output_csv: Path) -> int:
 
 
 def main() -> None:
-    symbol = SYMBOL.strip().upper()
+    if not isinstance(SYMBOLS, list) or not SYMBOLS or any(
+        not isinstance(symbol, str) or not symbol.strip() for symbol in SYMBOLS
+    ):
+        raise ValueError('SYMBOLS must be a non-empty list (e.g. ["BTCUSDT", "ETHUSDT"])')
+    symbols = list(dict.fromkeys(symbol.strip().upper() for symbol in SYMBOLS))
+    if any(not symbol.isascii() or not symbol.isalnum() for symbol in symbols):
+        raise ValueError("SYMBOLS must contain only letters and digits")
+
     input_dir = Path("./marketData")
-    extract_dir = Path("./marketData/unzipped") / symbol
-    output_csv = Path("./CleanData") / f"kline{symbol}.csv"
 
     if not input_dir.exists():
         raise FileNotFoundError(f"Input directory does not exist: {input_dir}")
 
-    if extract_dir.exists():
-        shutil.rmtree(extract_dir)
+    for symbol in symbols:
+        extract_dir = input_dir / "unzipped" / symbol
+        output_csv = Path("./CleanData") / f"kline{symbol}.csv"
 
-    csv_files = extract_zip_files(input_dir, extract_dir, symbol)
-    rows = merge_csv_files(csv_files, output_csv)
+        if extract_dir.exists():
+            shutil.rmtree(extract_dir)
 
-    print(f"Processed symbol: {symbol}")
-    print(f"Processed zip files from: {input_dir}")
-    print(f"Extracted CSV files: {len(csv_files)}")
-    print(f"Merged rows: {rows}")
-    print(f"Output CSV: {output_csv}")
+        csv_files = extract_zip_files(input_dir, extract_dir, symbol)
+        rows = merge_csv_files(csv_files, output_csv)
+
+        print(f"Processed symbol: {symbol}")
+        print(f"Processed zip files from: {input_dir}")
+        print(f"Extracted CSV files: {len(csv_files)}")
+        print(f"Merged rows: {rows}")
+        print(f"Output CSV: {output_csv}")
 
 
 if __name__ == "__main__":
