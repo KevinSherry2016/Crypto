@@ -41,3 +41,4 @@ CYMMn5JUfWeRgdxJzaXX6Fe4jQh4g1G51HvqYLfNnB2gbiwXxvbyWhnBBs1d9Fg9
 2. API管理，生成Key和Secret。添加IP白名单，自定义交易币对，授权各类操作
 3. 将合约交易改为单向持仓，保证金方式设置为联合保证金
 4. 查询各个交易币对的交易规则，包括最小开仓数量，金额，步长
+5. 现货账户、资金账户向合约账户转使得有足够保证金。

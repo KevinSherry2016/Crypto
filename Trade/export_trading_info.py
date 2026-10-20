@@ -2,7 +2,16 @@ import csv
 from pathlib import Path
 from binance.client import Client
 
-SYMBOLS = ["BTCUSDT", "ETHUSDT"]
+SYMBOLS = [
+    "BTCUSDT", "ETHUSDT", "ZECUSDT", "SOLUSDT", "QUSDT",
+    "NEARUSDT", "BRUSDT", "XRPUSDT", "WLDUSDT", "HYPEUSDT",
+    "AGTUSDT", "BTWUSDT", "GTCUSDT", "1000PEPEUSDT", "DOGEUSDT",
+    "BNBUSDT", "SUIUSDT", "PUMPUSDT", "ARBUSDT", "ENAUSDT",
+    "CTUSDT", "UNIUSDT", "PHAUSDT", "FILUSDT", "ADAUSDT",
+    "TIAUSDT", "TAOUSDT", "LINKUSDT", "INJUSDT", "AVAXUSDT",
+    "STRKUSDT", "QNTUSDT", "XMRUSDT", "APRUSDT", "AAVEUSDT",
+    "PAXGUSDT", "SANDUSDT", "ONDOUSDT", "ZROUSDT", "DOTUSDT",
+]
 
 def export_trading_info(client, symbols):
     if not symbols:
