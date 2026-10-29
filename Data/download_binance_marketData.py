@@ -15,7 +15,17 @@ HEADERS = { 'User-Agent': 'binance-downloader/1.0' }
 
 START_PARAM = '20240101'
 END_PARAM = '20260930'
-SYMBOLS_PARAM = ['SOLUSDT']
+SYMBOLS_PARAM = [
+    "BTCUSDT", "ETHUSDT", "ZECUSDT", "SOLUSDT", "QUSDT",
+    "NEARUSDT", "BRUSDT", "XRPUSDT", "WLDUSDT", "HYPEUSDT",
+    "AGTUSDT", "BTWUSDT", "GTCUSDT", "1000PEPEUSDT", "DOGEUSDT",
+    "BNBUSDT", "SUIUSDT", "PUMPUSDT", "ARBUSDT", "ENAUSDT",
+    "CTUSDT", "UNIUSDT", "PHAUSDT", "FILUSDT", "ADAUSDT",
+    "TIAUSDT", "TAOUSDT", "LINKUSDT", "INJUSDT", "AVAXUSDT",
+    "STRKUSDT", "QNTUSDT", "XMRUSDT", "APRUSDT", "AAVEUSDT",
+    "PAXGUSDT", "SANDUSDT", "ONDOUSDT", "ZROUSDT", "DOTUSDT",
+]
+
 DEST_PARAM = 'marketData'
 MARKET_PARAM = 'futures/um'
 INTERVAL_PARAM = 'daily'
@@ -136,23 +146,18 @@ def main():
 
     os.makedirs(dest, exist_ok=True)
 
-    planned = []
+    print('Starting downloads into', dest)
     for symbol in dict.fromkeys(SYMBOLS_PARAM):
-        print(f'Planned files for {symbol} from {start_date} to {end_date}:')
+        print(f'\nDownloading {symbol} from {start_date} to {end_date}:')
         for d in daterange(start_date, end_date):
             url, fname = build_url(symbol, d)
-            planned.append((d, url, fname))
-            print('  ', fname, '-', url)
-
-    print('\nStarting downloads into', dest)
-    for d, url, fname in planned:
-        dest_path = os.path.join(dest, fname)
-        exists = url_exists(url)
-        if not exists:
-            print('missing:', fname)
-            continue
-        status = download(url, dest_path)
-        print(status + ':', fname)
+            dest_path = os.path.join(dest, fname)
+            exists = url_exists(url)
+            if not exists:
+                print('missing:', fname)
+                continue
+            status = download(url, dest_path)
+            print(status + ':', fname)
 
     print('All done.')
 

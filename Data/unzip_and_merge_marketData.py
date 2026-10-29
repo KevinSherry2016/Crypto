@@ -4,7 +4,16 @@ from pathlib import Path
 from zipfile import ZipFile
 
 # 在这里直接修改要处理的交易币对，无需命令行参数。
-SYMBOLS = ["SOLUSDT"]
+SYMBOLS = [
+    "BTCUSDT", "ETHUSDT", "ZECUSDT", "SOLUSDT", "QUSDT",
+    "NEARUSDT", "BRUSDT", "XRPUSDT", "WLDUSDT", "HYPEUSDT",
+    "AGTUSDT", "BTWUSDT", "GTCUSDT", "1000PEPEUSDT", "DOGEUSDT",
+    "BNBUSDT", "SUIUSDT", "PUMPUSDT", "ARBUSDT", "ENAUSDT",
+    "CTUSDT", "UNIUSDT", "PHAUSDT", "FILUSDT", "ADAUSDT",
+    "TIAUSDT", "TAOUSDT", "LINKUSDT", "INJUSDT", "AVAXUSDT",
+    "STRKUSDT", "QNTUSDT", "XMRUSDT", "APRUSDT", "AAVEUSDT",
+    "PAXGUSDT", "SANDUSDT", "ONDOUSDT", "ZROUSDT", "DOTUSDT",
+]
 
 # Binance Kline CSV 默认 12 列。
 DEFAULT_COLUMNS = [
