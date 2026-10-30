@@ -6,6 +6,9 @@ subscribe_cryptofeed_marketData.py：接收实时行情数据
 check_merged_marketData.py：检查行情数据
 convert_cleandata_time_columns.py：将行情数据Unix时间戳进行转换
 
+Factor/
+因子必须有明确经济学意义
+因子值为正，倾向做多，因子值为负，倾向做空
 
 策略容量 交易费率 - > 万5 万2 BTC POT = 20
 

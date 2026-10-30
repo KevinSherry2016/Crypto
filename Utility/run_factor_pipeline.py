@@ -12,8 +12,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pandas as pd
-
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 FACTOR_DIR = ROOT_DIR / "Factor"
@@ -24,11 +22,6 @@ SYMBOL = "SOLUSDT"
 
 PIPELINE_CONFIG = {
     "factors": [],
-    "n_list": [10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200],
-    "custom_symbols": [],
-    "run_all": True,
-    "run_custom_symbols": False,
-    "excluded_symbols": [],
     "stop_on_error": False,
 }
 
@@ -44,86 +37,15 @@ def _load_module(module_path: Path):
     return module
 
 
-def _apply_factor_overrides(
-    module,
-    n_list: list[int],
-    custom_symbols: list[str],
-    excluded_symbols: list[str],
-) -> None:
+def _apply_factor_overrides(module) -> None:
     module.SYMBOL = SYMBOL
 
-    if n_list and hasattr(module, "N_LIST") and not hasattr(module, "PARAM_LIST"):
-        module.N_LIST = list(dict.fromkeys(n_list))
-
     if hasattr(module, "BACKTEST_START_DATE"):
-        # Use the minimum date so factor scripts include all available bars by default.
         module.BACKTEST_START_DATE = DEFAULT_BACKTEST_START_DATE
 
-    if not custom_symbols:
-        pass
-    else:
-        module.CUSTOM_GROUPS = [
-            {
-                "name": "CustomSymbols",
-                "symbols": list(dict.fromkeys(custom_symbols)),
-            }
-        ]
-
-    if excluded_symbols:
-        module.EXCLUDED_SYMBOLS = list(dict.fromkeys(excluded_symbols))
-
-
-def _run_one_factor(
-    script_path: Path,
-    n_list: list[int],
-    custom_symbols: list[str],
-    run_all: bool,
-    run_custom_symbols: bool,
-    excluded_symbols: list[str],
-) -> None:
+def _run_one_factor(script_path: Path) -> None:
     module = _load_module(script_path)
-    _apply_factor_overrides(
-        module,
-        n_list,
-        custom_symbols,
-        excluded_symbols,
-    )
-
-    # Prefer config-driven execution path for template-based factor scripts.
-    if all(hasattr(module, name) for name in ["_run_and_save", "FACTOR_NAME", "_safe_name"]):
-        info_path = ROOT_DIR / "Info.csv"
-        info = pd.read_csv(info_path, encoding="utf-8-sig")
-
-        excluded_sectors = [s.lower() for s in getattr(module, "EXCLUDED_SECTORS", [])]
-        valid_info = info[~info["sector"].str.lower().isin(excluded_sectors)]
-        excluded_symbol_list = getattr(module, "EXCLUDED_SYMBOLS", [])
-        if excluded_symbol_list:
-            valid_info = valid_info[~valid_info["ts_code"].isin(excluded_symbol_list)]
-
-        valid_symbol_set = set(valid_info["ts_code"].tolist())
-        market_data_path = "./main_contract/"
-        print(f"Loading {module.FACTOR_NAME} data...")
-
-        if hasattr(module, "PARAM_LIST"):
-            params = list(module.PARAM_LIST)
-        elif hasattr(module, "N_LIST"):
-            params = list(module.N_LIST)
-        else:
-            raise AttributeError(f"{script_path.name} has neither N_LIST nor PARAM_LIST")
-
-        for param in params:
-            if run_all:
-                module._run_and_save("ALL", sorted(valid_symbol_set), market_data_path, param)
-
-            if run_custom_symbols:
-                for group in getattr(module, "CUSTOM_GROUPS", []):
-                    raw_symbols = group.get("symbols", [])
-                    if isinstance(raw_symbols, str):
-                        raw_symbols = [raw_symbols]
-                    group_symbols = sorted(set(s for s in raw_symbols if s in valid_symbol_set))
-                    merged_name = "_".join(group_symbols) if group_symbols else group.get("name", "CustomGroup")
-                    module._run_and_save(merged_name, group_symbols, market_data_path, param)
-        return
+    _apply_factor_overrides(module)
 
     if not hasattr(module, "main"):
         raise AttributeError(f"{script_path.name} has no main()")
@@ -142,11 +64,6 @@ def _run_python_script(
 
 def main() -> None:
     factors = PIPELINE_CONFIG["factors"]
-    n_list = PIPELINE_CONFIG["n_list"]
-    custom_symbols = PIPELINE_CONFIG["custom_symbols"]
-    run_all = PIPELINE_CONFIG["run_all"]
-    run_custom_symbols = PIPELINE_CONFIG["run_custom_symbols"]
-    excluded_symbols = PIPELINE_CONFIG["excluded_symbols"]
     stop_on_error = PIPELINE_CONFIG["stop_on_error"]
 
     if not FACTOR_DIR.exists():
@@ -178,14 +95,7 @@ def main() -> None:
     for idx, script_path in enumerate(selected_scripts, start=1):
         print(f"[Factor {idx}/{len(selected_scripts)}] Running {script_path.stem} ...")
         try:
-            _run_one_factor(
-                script_path,
-                n_list,
-                custom_symbols,
-                run_all,
-                run_custom_symbols,
-                excluded_symbols,
-            )
+            _run_one_factor(script_path)
         except Exception as exc:
             msg = f"{script_path.name}: {exc}"
             failed.append(msg)

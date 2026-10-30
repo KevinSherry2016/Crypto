@@ -10,30 +10,6 @@ import os
 from pathlib import Path
 BACKTEST_START_DATE = '20100101'
 SYMBOL = 'BTCUSDT'
-PARAM_LIST = [
-    {'fast_n': 6, 'slow_n': 13, 'signal_n': 5},
-    {'fast_n': 8, 'slow_n': 17, 'signal_n': 9},
-    {'fast_n': 12, 'slow_n': 26, 'signal_n': 9},
-    {'fast_n': 19, 'slow_n': 39, 'signal_n': 9},
-    {'fast_n': 24, 'slow_n': 52, 'signal_n': 18},
-]
-
-EXCLUDED_SECTORS = ['Bond', 'StockIndex', 'Other', 'Others', 'Financial']
-EXCLUDED_SYMBOLS = []
-CUSTOM_GROUPS = [
-    {
-        'name': 'CustomSymbols',
-        'symbols': []
-    }
-]
-
-
-RUN_ALL = True
-SECTOR_LIST = []  # Empty means skip by-sector
-RUN_CUSTOM_SYMBOLS = True
-
-
-
 def _default_paths_local(current_file):
     project_root = Path(current_file).resolve().parent.parent
     return project_root / "CleanData" / f"kline{SYMBOL}.csv", project_root / "Result"
@@ -41,48 +17,14 @@ def _default_paths_local(current_file):
 
 def _prepare_crypto_dataframe_local(df):
     required = ["close_time", "open", "high", "low", "close", "volume"]
-    missing = [col for col in required if col not in df.columns]
+    missing = [column for column in required if column not in df.columns]
     if missing:
         raise ValueError(f"CleanData/kline{SYMBOL}.csv missing required columns: {missing}")
 
-    numeric_cols = ["close_time", "open", "high", "low", "close", "volume", "quote_volume", "count", "oi", "OpenInterest"]
-    for col in numeric_cols:
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
-
-    df = df.dropna(subset=["close_time", "close"]).copy()
-    df = df.sort_values("close_time")
-    df["trade_date"] = df["close_time"].astype(str)
-
-    alias_map = {
-        "open": "adj_open",
-        "high": "adj_high",
-        "low": "adj_low",
-        "close": "adj_close",
-        "volume": "adj_volume",
-    }
-    for raw_col, alias_col in alias_map.items():
-        df[alias_col] = df[raw_col]
-
-    if "vol" not in df.columns:
-        df["vol"] = df["volume"]
-    if "Volume" not in df.columns:
-        df["Volume"] = df["volume"]
-
-    if "oi" in df.columns and df["oi"].notna().any():
-        oi_series = df["oi"]
-    elif "OpenInterest" in df.columns and df["OpenInterest"].notna().any():
-        oi_series = df["OpenInterest"]
-    elif "quote_volume" in df.columns and df["quote_volume"].notna().any():
-        oi_series = df["quote_volume"]
-    elif "count" in df.columns and df["count"].notna().any():
-        oi_series = df["count"]
-    else:
-        oi_series = df["volume"]
-
-    df["oi"] = oi_series.astype(float)
-    df["OpenInterest"] = df["oi"]
-    df = df.set_index("trade_date")
+    for column in required:
+        df[column] = pd.to_numeric(df[column], errors="coerce")
+    df = df.dropna(subset=["close_time", "close"]).sort_values("close_time").copy()
+    df.index = df["close_time"].astype(str)
     return df
 
 
@@ -100,7 +42,7 @@ def _save_single_symbol_signal_local(signal, factor_name, param_str, output_dir,
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    signals = signal.to_frame().sort_index().fillna(0).astype(float)
+    signals = signal.to_frame().sort_index().astype(float)
     signals = signals[signals.index >= str(backtest_start_date)]
 
     raw_output_name = f"{factor_name}_{_safe_name(symbol)}_{param_str}_RAW_Position.csv"
@@ -114,40 +56,30 @@ def _safe_name(text):
     return ''.join(ch for ch in str(text) if ch.isalnum() or ch in ['_', '-', '.'])
 
 
-def _param_str(param):
-    return f"F{param['fast_n']}_S{param['slow_n']}_SIG{param['signal_n']}"
+def _param_str():
+    return "N20"
 
+def _calc_signal(df):
+    close = df["close"]
+    diff = close.ewm(span=12, adjust=False).mean()-close.ewm(span=26, adjust=False).mean()
+    signal = diff.ewm(span=9, adjust=False).mean()
+    return 2*(diff-signal)
 
-def _calc_signal(df, param):
-    close = df['adj_close']
-    dif = close.ewm(span=param['fast_n'], adjust=False).mean() - close.ewm(span=param['slow_n'], adjust=False).mean()
-    dea = dif.ewm(span=param['signal_n'], adjust=False).mean()
-    return (dif - dea) * 2
-
-
-
-def _load_btc_signal(filepath, param):
-    return _load_btc_series_local(
-        filepath,
-        lambda df: _calc_signal(df, param),
-        symbol=SYMBOL,
-    )
-
+def _load_btc_signal(filepath):
+    return _load_btc_series_local(filepath, _calc_signal, symbol=SYMBOL)
 
 def main():
     kline_path, output_dir = _default_paths_local(__file__)
-
     print(f"Loading {_factor_name()} data from: {kline_path}")
-    for param in PARAM_LIST:
-        signal = _load_btc_signal(kline_path, param)
-        _save_single_symbol_signal_local(
-            signal=signal,
-            factor_name=_factor_name(),
-            param_str=_param_str(param),
-            output_dir=output_dir,
-            backtest_start_date=BACKTEST_START_DATE,
-            symbol=SYMBOL,
-        )
+    signal = _load_btc_signal(kline_path)
+    _save_single_symbol_signal_local(
+        signal=signal,
+        factor_name=_factor_name(),
+        param_str=_param_str(),
+        output_dir=output_dir,
+        backtest_start_date=BACKTEST_START_DATE,
+        symbol=SYMBOL,
+    )
 
 
 if __name__ == "__main__":
