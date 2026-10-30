@@ -1,20 +1,11 @@
-数据：现货价格，期货价格，资金费率（每8小时更新一次）
-现货价格：
-https://data.binance.vision/?prefix=data/spot/daily/aggTrades/BTCUSDT/
+Data/
+download_binance_marketData.py：下载binance行情数据
+download_binance_fundingRate.py：下载binance资金费率数据
+unzip_and_merge_marketData.py：解压并合并binance行情数据
+subscribe_cryptofeed_marketData.py：接收实时行情数据
+check_merged_marketData.py：检查行情数据
+convert_cleandata_time_columns.py：将行情数据Unix时间戳进行转换
 
-期货价格：
-https://data.binance.vision/?prefix=data/futures/um/daily/aggTrades/BTCUSDT/
-
-资金费率：
-https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&startTime=1759276800000&endTime=1761868800000
-
-
-币安api文档：
-https://developers.binance.com/docs/zh-CN/binance-spot-api-docs/rest-api/general-api-information
-
-注意：
-1. 计算资费时，使用funding_rate * market_price
-2. 计算资费时，以时刻为准。如果那一时刻有仓位，就收资费
 
 策略容量 交易费率 - > 万5 万2 BTC POT = 20
 
