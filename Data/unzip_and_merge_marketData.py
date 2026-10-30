@@ -123,6 +123,10 @@ def main() -> None:
         extract_dir = input_dir / "unzipped" / symbol
         output_csv = Path("./CleanData") / f"kline{symbol}.csv"
 
+        if not any(input_dir.glob(f"{symbol}-*.zip")):
+            print(f"Skipping symbol: {symbol} (no zip files found in: {input_dir})")
+            continue
+
         if extract_dir.exists():
             shutil.rmtree(extract_dir)
 
